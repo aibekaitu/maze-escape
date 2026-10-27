@@ -97,7 +97,68 @@ public class Zones {
      * [1] the cost of the cheapest route from the zone of cell 0 to the zone of the last cell.
      */
     public static long[] routes(Input.Slides s, int[] zoneOf, int zoneCount) {
-        // TODO
-        return new long[]{0, 0};
+        int[] degree = new int[zoneCount];
+
+        for (int i = 0; i < s.count(); i++) {
+            int fromZone = zoneOf[s.from()[i]];
+            int toZone = zoneOf[s.to()[i]];
+
+            if (fromZone != toZone) {
+                degree[fromZone]++;
+            }
+        }
+
+        int[][] edges = new int[zoneCount][];
+
+        for (int z = 0; z < zoneCount; z++) {
+            edges[z] = new int[degree[z]];
+        }
+
+        int[] filled = new int[zoneCount];
+
+        for (int i = 0; i < s.count(); i++) {
+            int fromZone = zoneOf[s.from()[i]];
+            int toZone = zoneOf[s.to()[i]];
+
+            if (fromZone != toZone) {
+                edges[fromZone][filled[fromZone]++] = i;
+            }
+        }
+
+        int[] stages = new int[zoneCount];
+        Arrays.fill(stages, 1);
+
+        long[] bestCost = new long[zoneCount];
+        Arrays.fill(bestCost, Long.MAX_VALUE);
+        bestCost[zoneOf[0]] = 0;
+
+        for (int z = 0; z < zoneCount; z++) {
+            for (int edge : edges[z]) {
+                int nextZone = zoneOf[s.to()[edge]];
+
+                stages[nextZone] = Math.max(
+                        stages[nextZone], stages[z] + 1
+                );
+
+                if (bestCost[z] != Long.MAX_VALUE) {
+                    long newCost = bestCost[z] + s.time()[edge];
+
+                    if (newCost < bestCost[nextZone]) {
+                        bestCost[nextZone] = newCost;
+                    }
+                }
+            }
+        }
+
+        int longest = 0;
+
+        for (int value : stages) {
+            longest = Math.max(longest, value);
+        }
+
+        return new long[]{
+                longest,
+                bestCost[zoneOf[s.n() - 1]]
+        };
     }
 }
