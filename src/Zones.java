@@ -6,6 +6,7 @@
  * of the slides that enter cell v (reversed graph). The lists hold slide numbers i; the cell at the other end is s.to()[i]
  * or s.from()[i].
  */
+import java.util.Arrays;
 public class Zones {
 
     /**
@@ -19,8 +20,74 @@ public class Zones {
      * Is DAG in Main is 1 when the number of zones equals the number of cells (no cycle), so you do not need a separate check.
      */
     public static int[] kosaraju(Input.Slides s) {
-        // TODO
-        return new int[s.n()];
+        int n = s.n();
+
+        int[][] graph = Graphs.slidesFrom(s);
+        int[][] reversed = Graphs.slidesInto(s);
+
+        boolean[] visited = new boolean[n];
+        int[] order = new int[n];
+        int[] stack = new int[n];
+        int[] next = new int[n];
+
+        int orderSize = 0;
+
+        for (int start = 0; start < n; start++) {
+            if (visited[start]) continue;
+
+            int top = 0;
+            stack[top] = start;
+            visited[start] = true;
+
+            while (top >= 0) {
+                int u = stack[top];
+
+                if (next[u] < graph[u].length) {
+                    int edge = graph[u][next[u]++];
+                    int v = s.to()[edge];
+
+                    if (!visited[v]) {
+                        visited[v] = true;
+                        stack[++top] = v;
+                    }
+                } else {
+                    order[orderSize++] = u;
+                    top--;
+                }
+            }
+        }
+
+        int[] zoneOf = new int[n];
+        Arrays.fill(zoneOf, -1);
+
+        int zoneCount = 0;
+
+        for (int i = orderSize - 1; i >= 0; i--) {
+            int start = order[i];
+
+            if (zoneOf[start] != -1) continue;
+
+            int top = 0;
+            stack[top] = start;
+            zoneOf[start] = zoneCount;
+
+            while (top >= 0) {
+                int u = stack[top--];
+
+                for (int edge : reversed[u]) {
+                    int v = s.from()[edge];
+
+                    if (zoneOf[v] == -1) {
+                        zoneOf[v] = zoneCount;
+                        stack[++top] = v;
+                    }
+                }
+            }
+
+            zoneCount++;
+        }
+
+        return zoneOf;
     }
 
     /**
